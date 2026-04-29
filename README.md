@@ -1,15 +1,19 @@
 адрес агушной MongoDB закомментирован
-Для регистрации админа:
-{
-  "name": "Лилия",
-  "lastname": "Дума",
-  "midlename": "Сергеевна",
-  "email": "admin@mail.ru",
-  "password": "K869b*",
-  "role": "ADMIN"
-}
+
 Для авторизации админа:
 {
-  "email": "admin@mail.ru",
-  "password": "K869b*",
+  "email": "pum@mail.ru",
+  "password": "K869b*"
+}
+
+Для авторизации Димы:
+{
+  "email": "sdcfd@mail.ru",
+ "password": "log45*"
+}
+
+Для авторизации Вики
+{
+"email":"cvs@mail.ru",
+"password":"pok89#08"
 }
