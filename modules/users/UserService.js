@@ -8,11 +8,26 @@ generateToken(user) {
     return jwt.sign(
         {
             id: user._id,
-            role: user.role
+            role: user.roles[0]
         },
         "SECRET_KEY",
         { expiresIn: "24h" }
     );
+}
+
+async createUser(name, lastname, midlename, email, password, role = "USER") {
+    const hashPassword = await bcrypt.hash(password, 5);
+    
+    const user = await User.create({
+        name,
+        lastname,
+        midlename,
+        email,
+        password: hashPassword,
+        roles: [role]
+    });
+    
+    return user;  
 }
 
 async registration(name, lastname, midlename, email, password, role = "USER") {
@@ -45,7 +60,7 @@ async registration(name, lastname, midlename, email, password, role = "USER") {
         midlename,
         email,
         password: hashPassword,
-        role
+        roles: [role]
     });
 
     return this.generateToken(user);

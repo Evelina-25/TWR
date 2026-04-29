@@ -100,7 +100,7 @@ router.post(
     "/",
     authMiddleware,
     roleMiddleware("ADMIN"),
-    ProductController.create
+    UserController.create
 );
 
 /**
@@ -139,7 +139,12 @@ router.get(
  *       404:
  *         description: Пользователь не найден
  */
-router.get("/:id", authMiddleware, UserController.getOne);
+router.get(
+    "/:id",
+    authMiddleware,
+    roleMiddleware("ADMIN"),
+    UserController.getOne
+);
 
 /**
  * @swagger
