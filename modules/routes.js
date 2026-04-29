@@ -4,6 +4,7 @@ import categoryRouter from "./categories/CategoryRouter.js";
 import userRouter from "./users/UserRouter.js";
 import CartRouter from "./cart/CartRouter.js";
 import CharacteristicRouter from "./characteristics/CharacteristicRouter.js";
+import orderRouter from "./orders/OrderRouter.js";
 
 const router = express.Router();
 
@@ -12,5 +13,5 @@ router.use("/categories", categoryRouter);
 router.use("/users", userRouter);
 router.use("/carts", CartRouter);
 router.use("/characteristics", CharacteristicRouter);
-
+router.use("/orders", orderRouter);
 export default router;
