@@ -11,7 +11,7 @@ const router = express.Router();
 router.use("/products", productRouter);
 router.use("/categories", categoryRouter);
 router.use("/users", userRouter);
-router.use("/carts", CartRouter);
+router.use("/cart", CartRouter);
 router.use("/characteristics", CharacteristicRouter);
 router.use("/orders", orderRouter);
 export default router;

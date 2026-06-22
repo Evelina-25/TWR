@@ -27,15 +27,23 @@ const router = new Router();
  *                 properties:
  *                   street:
  *                     type: string
+ *                     example: "ул. Пушкина 10"
  *                   city:
  *                     type: string
+ *                     example: "Москва"
  *                   postalCode:
  *                     type: string
+ *                     example: "101000"
  *                   phone:
  *                     type: string
+ *                     example: "+79001234567"
  *     responses:
  *       201:
  *         description: Заказ создан
+ *       401:
+ *         description: Не авторизован
+ *       500:
+ *         description: Ошибка сервера
  */
 router.post("/", authMiddleware, OrderController.create);
 
@@ -43,10 +51,15 @@ router.post("/", authMiddleware, OrderController.create);
  * @swagger
  * /api/orders/my:
  *   get:
- *     summary: Получить мои заказы
+ *     summary: Получить мои заказы (текущего пользователя)
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Список заказов пользователя
+ *       401:
+ *         description: Не авторизован
  */
 router.get("/my", authMiddleware, OrderController.getMyOrders);
 
@@ -58,6 +71,23 @@ router.get("/my", authMiddleware, OrderController.getMyOrders);
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID заказа
+ *         example: "67a9fb80ef47f94ced13dd5d"
+ *     responses:
+ *       200:
+ *         description: Информация о заказе
+ *       401:
+ *         description: Не авторизован
+ *       403:
+ *         description: Нет доступа (заказ принадлежит другому пользователю)
+ *       404:
+ *         description: Заказ не найден
  */
 router.get("/:id", authMiddleware, OrderController.getOrderById);
 
@@ -65,22 +95,47 @@ router.get("/:id", authMiddleware, OrderController.getOrderById);
  * @swagger
  * /api/orders/{id}/cancel:
  *   put:
- *     summary: Отменить заказ (только pending)
+ *     summary: Отменить заказ (только если статус pending)
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID заказа для отмены
+ *         example: "67a9fb80ef47f94ced13dd5d"
+ *     responses:
+ *       200:
+ *         description: Заказ отменен
+ *       400:
+ *         description: Заказ нельзя отменить (статус не pending)
+ *       401:
+ *         description: Не авторизован
+ *       403:
+ *         description: Нет доступа
+ *       404:
+ *         description: Заказ не найден
  */
 router.put("/:id/cancel", authMiddleware, OrderController.cancelOrder);
 
-// АДМИНСКИЕ ЭНДПОИНТЫ (только для роли ADMIN)
 /**
  * @swagger
  * /api/orders/admin/all:
  *   get:
- *     summary: Все заказы (админ)
+ *     summary: Получить все заказы всех пользователей (только ADMIN)
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Список всех заказов
+ *       401:
+ *         description: Не авторизован
+ *       403:
+ *         description: Нет доступа (требуется роль ADMIN)
  */
 router.get("/admin/all", authMiddleware, roleMiddleware("ADMIN"), OrderController.getAllOrders);
 
@@ -88,20 +143,43 @@ router.get("/admin/all", authMiddleware, roleMiddleware("ADMIN"), OrderControlle
  * @swagger
  * /api/orders/admin/{id}/status:
  *   put:
- *     summary: Сменить статус заказа (админ)
+ *     summary: Изменить статус заказа (только ADMIN)
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID заказа
+ *         example: "67a9fb80ef47f94ced13dd5d"
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - status
  *             properties:
  *               status:
  *                 type: string
  *                 enum: [pending, paid, shipped, delivered, cancelled]
+ *                 example: "shipped"
+ *                 description: Новый статус заказа
+ *     responses:
+ *       200:
+ *         description: Статус обновлен
+ *       400:
+ *         description: Некорректный статус
+ *       401:
+ *         description: Не авторизован
+ *       403:
+ *         description: Нет доступа (требуется роль ADMIN)
+ *       404:
+ *         description: Заказ не найден
  */
 router.put("/admin/:id/status", authMiddleware, roleMiddleware("ADMIN"), OrderController.updateStatus);
 
