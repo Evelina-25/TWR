@@ -1,6 +1,12 @@
 import mongoose from "mongoose";
 
 const CartSchema = new mongoose.Schema({
+    cartNumber: { 
+        type: String,
+        unique: true,
+        required: true,
+        index: true  
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

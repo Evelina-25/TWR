@@ -21,7 +21,12 @@ const router = new Router();
  *             type: object
  *             required:
  *               - deliveryAddress
+ *               - cartNumber
  *             properties:
+ *               cartNumber:
+ *                 type: string
+ *                 description: Номер корзины (например, CART-A3F7D9E1)
+ *                 example: "CART-A3F7D9E1"
  *               deliveryAddress:
  *                 type: object
  *                 properties:
@@ -40,8 +45,12 @@ const router = new Router();
  *     responses:
  *       201:
  *         description: Заказ создан
+ *       400:
+ *         description: Ошибка валидации (не передан cartNumber или корзина пуста)
  *       401:
  *         description: Не авторизован
+ *       404:
+ *         description: Корзина не найдена
  *       500:
  *         description: Ошибка сервера
  */

@@ -6,8 +6,8 @@ import routes from "./routes.js";
 import fileUpload from "express-fileupload";
 
 const PORT = 5000;
-//const uri = "mongodb://admin:mongo721887@192.168.0.62/cosmetica?authSource=admin";
-const uri = "mongodb://localhost:27017/cosmetica";
+const uri = "mongodb://admin:mongo721887@192.168.0.62/cosmetica?authSource=admin";
+//const uri = "mongodb://localhost:27017/cosmetica";
 
 const app = express();
 

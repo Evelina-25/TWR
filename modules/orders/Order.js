@@ -6,26 +6,10 @@ const OrderSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
-    products: [
-        {
-            product: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Product"
-            },
-            quantity: {
-                type: Number,
-                required: true
-            },
-            priceAtTime: {
-                type: Number,
-                required: true
-            },
-            nameAtTime: {
-                type: String,
-                required: true
-            }
-        }
-    ],
+    cartNumber: {  
+        type: String,
+        required: true  
+    },
     totalAmount: {
         type: Number,
         required: true

@@ -4,9 +4,10 @@ class OrderController {
 
     async create(req, res) {
         try {
-            const { deliveryAddress } = req.body;
+            const { deliveryAddress, cartNumber } = req.body; 
             const order = await OrderService.createOrderFromCart(
                 req.user.id,
+                cartNumber,  
                 deliveryAddress
             );
             return res.status(201).json(order);
