@@ -1,17 +1,25 @@
 import mongoose from "mongoose";
 
 const CartSchema = new mongoose.Schema({
-    cartNumber: { 
+    cartNumber: {
         type: String,
         unique: true,
         required: true,
-        index: true  
+        index: true
     },
+
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true
     },
+
+    status: {
+        type: String,
+        enum: ["unpaid", "paid"],
+        default: "unpaid"
+    },
+
     products: [
         {
             product: {
@@ -24,6 +32,8 @@ const CartSchema = new mongoose.Schema({
             }
         }
     ]
+}, {
+    timestamps: true
 });
 
 export default mongoose.model("Cart", CartSchema);

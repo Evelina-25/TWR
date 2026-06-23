@@ -6,29 +6,31 @@ const OrderSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
-    cartNumber: {  
+
+    cartNumber: {
         type: String,
-        required: true  
+        required: true
     },
+
     totalAmount: {
         type: Number,
         required: true
     },
+
     status: {
         type: String,
-        enum: ["pending", "paid", "shipped", "delivered", "cancelled"],
-        default: "pending"
+        enum: ["paid", "shipped", "delivered", "cancelled"],
+        default: "paid"
     },
+
     deliveryAddress: {
         street: { type: String, required: true },
         city: { type: String, required: true },
         postalCode: { type: String, required: true },
         phone: { type: String, required: true }
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
     }
+}, {
+    timestamps: true
 });
 
 export default mongoose.model("Order", OrderSchema);

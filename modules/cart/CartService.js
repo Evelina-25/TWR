@@ -1,5 +1,10 @@
 import Cart from "./Cart.js";
-import { v4 as uuidv4 } from 'uuid'; 
+import { v4 as uuidv4 } from "uuid";
+
+export const CART_STATUSES = {
+    UNPAID: "unpaid",
+    PAID: "paid"
+};
 
 class CartService {
 
@@ -8,22 +13,29 @@ class CartService {
     }
 
     async createCart(userId) {
-        const cartNumber = this.generateCartNumber();
-        console.log("Создание корзины с номером:", cartNumber); 
-        
         return await Cart.create({
-            cartNumber: cartNumber,
+            cartNumber: this.generateCartNumber(),
             user: userId,
+            status: CART_STATUSES.UNPAID,
             products: []
         });
     }
 
-    async addToCart(userId, productId) {
-        let cart = await Cart.findOne({ user: userId });
+    async getOrCreateCart(userId) {
+        let cart = await Cart.findOne({
+            user: userId,
+            status: CART_STATUSES.UNPAID
+        });
 
         if (!cart) {
-            cart = await this.createCart(userId); 
+            cart = await this.createCart(userId);
         }
+
+        return cart;
+    }
+
+    async addToCart(userId, productId) {
+        const cart = await this.getOrCreateCart(userId);
 
         const productIndex = cart.products.findIndex(
             item => item.product.toString() === productId
@@ -39,33 +51,28 @@ class CartService {
         }
 
         await cart.save();
-        return cart;
-    }
 
-    async getCartByNumber(cartNumber) {
-        return await Cart.findOne({ cartNumber })
-            .populate({
-                path: "products.product",
-                populate: [
-                    { path: "category" },
-                    { path: "characteristic" }
-                ]
-            });
+        return this.getCart(userId);
     }
 
     async getCart(userId) {
-        return await Cart.findOne({ user: userId })
-            .populate({
-                path: "products.product",
-                populate: [
-                    { path: "category" },
-                    { path: "characteristic" }
-                ]
-            });
+        return await Cart.findOne({
+            user: userId,
+            status: CART_STATUSES.UNPAID
+        }).populate({
+            path: "products.product",
+            populate: [
+                { path: "category" },
+                { path: "characteristic" }
+            ]
+        });
     }
 
     async removeFromCart(userId, productId) {
-        const cart = await Cart.findOne({ user: userId });
+        const cart = await Cart.findOne({
+            user: userId,
+            status: CART_STATUSES.UNPAID
+        });
 
         if (!cart) {
             throw new Error("Корзина не найдена");
@@ -76,18 +83,44 @@ class CartService {
         );
 
         await cart.save();
-        return cart;
+
+        return this.getCart(userId);
     }
 
     async clearCart(userId) {
-        const cart = await Cart.findOne({ user: userId });
+        const cart = await Cart.findOne({
+            user: userId,
+            status: CART_STATUSES.UNPAID
+        });
 
         if (!cart) {
             throw new Error("Корзина не найдена");
         }
 
         cart.products = [];
+
         await cart.save();
+
+        return cart;
+    }
+
+    async markAsPaid(userId, cartNumber) {
+        const cart = await Cart.findOne({
+            user: userId,
+            cartNumber,
+            status: CART_STATUSES.UNPAID
+        });
+
+        if (!cart) {
+            throw new Error("Корзина не найдена");
+        }
+
+        cart.status = CART_STATUSES.PAID;
+
+        await cart.save();
+
+        await this.createCart(userId);
+
         return cart;
     }
 }

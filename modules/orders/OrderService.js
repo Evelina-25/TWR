@@ -4,46 +4,40 @@ import CartService from "../cart/CartService.js";
 
 class OrderService {
 
-    async createOrderFromCart(userId, cartNumber, deliveryAddress) {
-        if (!cartNumber) {
-            throw new Error("Номер корзины обязателен");
-        }
+async createOrderFromCart(userId, cartNumber, deliveryAddress) {
 
-        const cart = await Cart.findOne({ 
-            cartNumber: cartNumber,  
-            user: userId 
-        }).populate("products.product");
-        
-        if (!cart) {
-            throw new Error("Корзина не найдена или не принадлежит пользователю");
-        }
+    const cart = await Cart.findOne({
+        user: userId,
+        cartNumber,
+        status: "unpaid"
+    }).populate("products.product");
 
-        if (cart.products.length === 0) {
-            throw new Error("Корзина пуста");
-        }
-
-        let total = 0;
-        for (const item of cart.products) {
-            const product = item.product;
-            if (!product) {
-                throw new Error(`Товар с ID ${item.product} не найден`);
-            }
-            total += (product.price || 0) * item.quantity;
-        }
-
-        const order = await Order.create({
-            user: userId,
-            cartNumber: cartNumber,  
-            totalAmount: total,
-            deliveryAddress: deliveryAddress,
-            status: "pending"
-        });
-
-        cart.products = [];
-        await cart.save();
-
-        return await this.getOrderWithCart(order._id);
+    if (!cart) {
+        throw new Error("Корзина не найдена");
     }
+
+    if (!cart.products.length) {
+        throw new Error("Корзина пуста");
+    }
+
+    let total = 0;
+
+    for (const item of cart.products) {
+        total += item.product.price * item.quantity;
+    }
+
+    const order = await Order.create({
+        user: userId,
+        cartNumber,
+        totalAmount: total,
+        deliveryAddress,
+        status: "paid"
+    });
+
+    await CartService.markAsPaid(userId, cartNumber);
+
+    return this.getOrderWithCart(order._id);
+}
 
     async getOrderWithCart(orderId) {
         const order = await Order.findById(orderId)
@@ -145,18 +139,28 @@ class OrderService {
         return order;
     }
 
-    async cancelOrder(orderId, userId) {
-        const order = await Order.findOne({ _id: orderId, user: userId });
-        if (!order) throw new Error("Заказ не найден");
-        
-        if (order.status !== "pending") {
-            throw new Error("Можно отменить только заказ в статусе 'pending'");
-        }
-        
-        order.status = "cancelled";
-        await order.save();
-        return order;
+async cancelOrder(orderId, userId) {
+    const order = await Order.findOne({
+        _id: orderId,
+        user: userId
+    });
+
+    if (!order) {
+        throw new Error("Заказ не найден");
     }
+
+    if (order.status !== "paid") {
+        throw new Error(
+            "Можно отменить только заказ со статусом 'paid'"
+        );
+    }
+
+    order.status = "cancelled";
+
+    await order.save();
+
+    return order;
+}
 }
 
 export default new OrderService();

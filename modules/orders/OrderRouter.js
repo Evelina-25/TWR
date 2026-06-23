@@ -104,7 +104,7 @@ router.get("/:id", authMiddleware, OrderController.getOrderById);
  * @swagger
  * /api/orders/{id}/cancel:
  *   put:
- *     summary: Отменить заказ (только если статус pending)
+ *     summary: Отменить заказ (только если статус paid)
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
@@ -120,7 +120,7 @@ router.get("/:id", authMiddleware, OrderController.getOrderById);
  *       200:
  *         description: Заказ отменен
  *       400:
- *         description: Заказ нельзя отменить (статус не pending)
+ *         description: Заказ нельзя отменить (статус не paid)
  *       401:
  *         description: Не авторизован
  *       403:
