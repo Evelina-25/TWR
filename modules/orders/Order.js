@@ -12,6 +12,21 @@ const OrderSchema = new mongoose.Schema({
         required: true
     },
 
+    products: [
+        {
+            product: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Product",
+                required: true
+            },
+            quantity: {
+                type: Number,
+                required: true,
+                default: 1
+            }
+        }
+    ],
+
     totalAmount: {
         type: Number,
         required: true
@@ -19,8 +34,8 @@ const OrderSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ["paid", "shipped", "delivered", "cancelled"],
-        default: "paid"
+        enum: ["pending", "paid", "shipped", "delivered", "cancelled"],
+        default: "pending"
     },
 
     deliveryAddress: {

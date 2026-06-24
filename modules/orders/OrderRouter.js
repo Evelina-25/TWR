@@ -7,9 +7,37 @@ const router = new Router();
 
 /**
  * @swagger
+ * /api/orders/cart:
+ *   get:
+ *     summary: Получить текущую активную корзину для выбора товаров в заказ
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Активная корзина с товарами для выбора
+ */
+router.get("/cart", authMiddleware, OrderController.getCartForOrder);
+
+/**
+ * @swagger
+ * /api/orders/carts/all:
+ *   get:
+ *     summary: Получить все корзины пользователя (активные и неактивные)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Все корзины пользователя
+ */
+router.get("/carts/all", authMiddleware, OrderController.getAllUserCarts);
+
+/**
+ * @swagger
  * /api/orders:
  *   post:
- *     summary: Создать заказ из корзины
+ *     summary: Создать заказ из выбранных товаров корзины
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
@@ -20,13 +48,15 @@ const router = new Router();
  *           schema:
  *             type: object
  *             required:
+ *               - productIds
  *               - deliveryAddress
- *               - cartNumber
  *             properties:
- *               cartNumber:
- *                 type: string
- *                 description: Номер корзины (например, CART-A3F7D9E1)
- *                 example: "CART-A3F7D9E1"
+ *               productIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Массив ID товаров из корзины для заказа
+ *                 example: ["67a9fb80ef47f94ced13dd5d", "67a9fb80ef47f94ced13dd5e"]
  *               deliveryAddress:
  *                 type: object
  *                 properties:
@@ -44,9 +74,9 @@ const router = new Router();
  *                     example: "+79001234567"
  *     responses:
  *       201:
- *         description: Заказ создан
+ *         description: Заказ создан со статусом "pending"
  *       400:
- *         description: Ошибка валидации (не передан cartNumber или корзина пуста)
+ *         description: Ошибка валидации
  *       401:
  *         description: Не авторизован
  *       404:
@@ -94,7 +124,7 @@ router.get("/my", authMiddleware, OrderController.getMyOrders);
  *       401:
  *         description: Не авторизован
  *       403:
- *         description: Нет доступа (заказ принадлежит другому пользователю)
+ *         description: Нет доступа
  *       404:
  *         description: Заказ не найден
  */
@@ -104,7 +134,7 @@ router.get("/:id", authMiddleware, OrderController.getOrderById);
  * @swagger
  * /api/orders/{id}/cancel:
  *   put:
- *     summary: Отменить заказ (только если статус paid)
+ *     summary: Отменить заказ (только если статус pending или paid)
  *     tags: [Orders]
  *     security:
  *       - bearerAuth: []
@@ -120,7 +150,7 @@ router.get("/:id", authMiddleware, OrderController.getOrderById);
  *       200:
  *         description: Заказ отменен
  *       400:
- *         description: Заказ нельзя отменить (статус не paid)
+ *         description: Заказ нельзя отменить
  *       401:
  *         description: Не авторизован
  *       403:
@@ -129,6 +159,36 @@ router.get("/:id", authMiddleware, OrderController.getOrderById);
  *         description: Заказ не найден
  */
 router.put("/:id/cancel", authMiddleware, OrderController.cancelOrder);
+
+/**
+ * @swagger
+ * /api/orders/{id}/pay:
+ *   put:
+ *     summary: Оплатить заказ (изменить статус с pending на paid)
+ *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID заказа для оплаты
+ *         example: "67a9fb80ef47f94ced13dd5d"
+ *     responses:
+ *       200:
+ *         description: Заказ успешно оплачен
+ *       400:
+ *         description: Заказ нельзя оплатить
+ *       401:
+ *         description: Не авторизован
+ *       403:
+ *         description: Нет доступа
+ *       404:
+ *         description: Заказ не найден
+ */
+router.put("/:id/pay", authMiddleware, OrderController.payOrder);
 
 /**
  * @swagger
@@ -186,7 +246,7 @@ router.get("/admin/all", authMiddleware, roleMiddleware("ADMIN"), OrderControlle
  *       401:
  *         description: Не авторизован
  *       403:
- *         description: Нет доступа (требуется роль ADMIN)
+ *         description: Нет доступа
  *       404:
  *         description: Заказ не найден
  */

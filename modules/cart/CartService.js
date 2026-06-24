@@ -2,8 +2,8 @@ import Cart from "./Cart.js";
 import { v4 as uuidv4 } from "uuid";
 
 export const CART_STATUSES = {
-    UNPAID: "unpaid",
-    PAID: "paid"
+    active: "active",
+    inactive: "inactive"
 };
 
 class CartService {
@@ -16,7 +16,7 @@ class CartService {
         return await Cart.create({
             cartNumber: this.generateCartNumber(),
             user: userId,
-            status: CART_STATUSES.UNPAID,
+            status: CART_STATUSES.active,
             products: []
         });
     }
@@ -24,7 +24,7 @@ class CartService {
     async getOrCreateCart(userId) {
         let cart = await Cart.findOne({
             user: userId,
-            status: CART_STATUSES.UNPAID
+            status: CART_STATUSES.active
         });
 
         if (!cart) {
@@ -58,7 +58,32 @@ class CartService {
     async getCart(userId) {
         return await Cart.findOne({
             user: userId,
-            status: CART_STATUSES.UNPAID
+            status: CART_STATUSES.active
+        }).populate({
+            path: "products.product",
+            populate: [
+                { path: "category" },
+                { path: "characteristic" }
+            ]
+        });
+    }
+
+    async getCartWithProducts(userId) {
+        return await Cart.findOne({
+            user: userId,
+            status: CART_STATUSES.active
+        }).populate({
+            path: "products.product",
+            populate: [
+                { path: "category" },
+                { path: "characteristic" }
+            ]
+        });
+    }
+
+    async getCartByNumber(cartNumber) {
+        return await Cart.findOne({
+            cartNumber
         }).populate({
             path: "products.product",
             populate: [
@@ -71,7 +96,7 @@ class CartService {
     async removeFromCart(userId, productId) {
         const cart = await Cart.findOne({
             user: userId,
-            status: CART_STATUSES.UNPAID
+            status: CART_STATUSES.active
         });
 
         if (!cart) {
@@ -90,7 +115,7 @@ class CartService {
     async clearCart(userId) {
         const cart = await Cart.findOne({
             user: userId,
-            status: CART_STATUSES.UNPAID
+            status: CART_STATUSES.active
         });
 
         if (!cart) {
@@ -104,24 +129,78 @@ class CartService {
         return cart;
     }
 
-    async markAsPaid(userId, cartNumber) {
+    async markAsInactive(userId, cartNumber) {
         const cart = await Cart.findOne({
             user: userId,
             cartNumber,
-            status: CART_STATUSES.UNPAID
+            status: CART_STATUSES.active
         });
 
         if (!cart) {
             throw new Error("Корзина не найдена");
         }
 
-        cart.status = CART_STATUSES.PAID;
+        cart.status = CART_STATUSES.inactive;
 
         await cart.save();
 
-        await this.createCart(userId);
+        const newCart = await this.createCart(userId);
+
+        return { oldCart: cart, newCart };
+    }
+
+    async deactivateCartWithProducts(userId, cartNumber) {
+        const cart = await Cart.findOne({
+            user: userId,
+            cartNumber,
+            status: CART_STATUSES.active
+        });
+
+        if (!cart) {
+            throw new Error("Корзина не найдена");
+        }
+
+        cart.status = CART_STATUSES.inactive;
+        await cart.save();
+
+        const newCart = await this.createCart(userId);
+
+        return { oldCart: cart, newCart };
+    }
+
+    async removeProductsFromCart(userId, productIds) {
+        const cart = await Cart.findOne({
+            user: userId,
+            status: CART_STATUSES.active
+        });
+
+        if (!cart) {
+            throw new Error("Корзина не найдена");
+        }
+
+        cart.products = cart.products.filter(
+            item => !productIds.includes(item.product.toString())
+        );
+
+        await cart.save();
+
+        if (cart.products.length === 0) {
+            await this.deactivateCartWithProducts(userId, cart.cartNumber);
+        }
 
         return cart;
+    }
+
+    async getAllUserCarts(userId) {
+        return await Cart.find({
+            user: userId
+        }).sort({ createdAt: -1 }).populate({
+            path: "products.product",
+            populate: [
+                { path: "category" },
+                { path: "characteristic" }
+            ]
+        });
     }
 }
 

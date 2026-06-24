@@ -16,8 +16,8 @@ const CartSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ["unpaid", "paid"],
-        default: "unpaid"
+        enum: ["active", "inactive"],
+        default: "inactive"
     },
 
     products: [
